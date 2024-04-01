@@ -1,15 +1,29 @@
 import MealItem from "@/components/meals/meal-item.component";
 import { meals } from "@/utils/data";
 import Link from "next/link";
+import classes from './page.module.css';
+import MealsGrid from "@/components/meals/meals-grid";
+import { getMeals } from "@/lib/meals";
 
-function MealsPage() {
-    return (<main>
-        <h2>View Our Meals</h2>
-        <Link href={'/meals/share'}>Go to share</Link>
-        <div style={styles.mealsContainer}>
-            {meals.map((item) => <MealItem key={item.id} item={item} />)}
-        </div>
-    </main>);
+async function MealsPage() {
+    const meals = await getMeals();
+
+    return (
+        <>
+            <header className={classes.header}>
+                <h1>
+                    Delicious meals. created{" "}
+                    <span className={classes.highlight}>by you</span>
+                </h1>
+                <p>Choose your favorite recipe and cook it yourself, Enjoy!</p>
+                <p className={classes.cta}>
+                    <Link href='/meals/share'>Share Your Favorite Recipe</Link>
+                </p>
+            </header>
+            <main className={classes.main}>
+                <MealsGrid meals={meals} />
+            </main>
+        </>);
 }
 
 const styles = {
