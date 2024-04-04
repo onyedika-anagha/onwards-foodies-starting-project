@@ -1,4 +1,8 @@
-import { getMeals } from "@/lib/meals";
+import { getMeal } from "@/lib/meals";
+import classes from './page.module.css';
+import { getMealMetaData } from "@/utils/helper-functions";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata(
     { params, searchParams },
@@ -8,39 +12,42 @@ export async function generateMetadata(
     const slug = params.slug
 
     // fetch data
-    const meals = await getMeals(),
-        meal = meals.find(i => i.slug === slug)
-
+    const meal = await getMeal(slug)
+    if (!meal) {
+        return {
+            title: "Error 404, Meals not found."
+        };
+    }
     // optionally access and extend (rather than replace) parent metadata
     const previousImages = (await parent).openGraph?.images || []
-    return {
-        title: meal.title, icons: {
-            icon: [
-                { url: meal.image },
-                { url: meal.image, media: '(prefers-color-scheme: dark)' },
-            ],
-            shortcut: [meal.image],
-            apple: [
-                { url: meal.image },
-                { url: meal.image, sizes: '180x180', type: 'image/png' },
-            ],
-            other: [
-                {
-                    rel: meal.image,
-                    url: meal.image,
-                },
-            ],
-        },
-        openGraph: {
-            images: [meal.image, ...previousImages],
-        },
-    }
+    return getMealMetaData(meal, previousImages)
 }
 
 function MealDetails({ params }) {
-    return (<main>
-        <h2>{params.slug}</h2>
-    </main>);
+    const meal = getMeal(params.slug);
+
+    if (!meal) {
+        notFound();
+    }
+
+    meal.instructions = meal.instructions.replace(/\n/g, '<br/>')
+    return (<>
+        <header className={classes.header}>
+            <div className={classes.image}>
+                <Image src={meal.image} alt={meal.title} fill />
+            </div>
+            <div className={classes.headerText}>
+                <h1>{meal.title}</h1>
+                <p className={classes.creator}>
+                    by <a href={`mailto:${meal.creator_email}`}>{meal.creator}</a>
+                </p>
+                <p className={classes.summary}>{meal.summary}</p>
+            </div>
+        </header>
+        <main>
+            <p className={classes.instructions} dangerouslySetInnerHTML={{ __html: meal.instructions }}></p>
+        </main>
+    </>);
 }
 
 export default MealDetails;
